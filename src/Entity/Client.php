@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ClientRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
@@ -21,6 +23,14 @@ class Client
 
     #[ORM\OneToOne(cascade: ['persist', 'remove'])]
     private ?Utilisateur $Utilisateur = null;
+
+    #[ORM\OneToMany(mappedBy: 'client', targetEntity: Command::class)]
+    private Collection $Commands;
+
+    public function __construct()
+    {
+        $this->Commands = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -59,6 +69,36 @@ class Client
     public function setUtilisateur(?Utilisateur $Utilisateur): self
     {
         $this->Utilisateur = $Utilisateur;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Command>
+     */
+    public function getCommands(): Collection
+    {
+        return $this->Commands;
+    }
+
+    public function addCommand(Command $command): self
+    {
+        if (!$this->Commands->contains($command)) {
+            $this->Commands->add($command);
+            $command->setClient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCommand(Command $command): self
+    {
+        if ($this->Commands->removeElement($command)) {
+            // set the owning side to null (unless already changed)
+            if ($command->getClient() === $this) {
+                $command->setClient(null);
+            }
+        }
 
         return $this;
     }
